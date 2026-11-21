@@ -5,7 +5,7 @@ CertiFlow is a batch-based certificate generation and verification platform with
 ## 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/Abhishek-Kadavergu/certiflow.git
 cd certiflow
 ```
 
