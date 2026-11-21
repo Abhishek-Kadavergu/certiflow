@@ -1,0 +1,130 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  TRAINING_CENTER
+  DISTRICT_OFFICER
+  QUALITY_REVIEWER
+  STATE_ADMIN
+}
+
+enum BatchStatus {
+  DRAFT
+  SUBMITTED
+  DISTRICT_REVIEW
+  QUALITY_REVIEW
+  STATE_REVIEW
+  RETURNED
+  APPROVED
+  REJECTED
+}
+
+enum ApprovalStage {
+  DISTRICT
+  QUALITY
+  STATE
+}
+
+enum Decision {
+  APPROVED
+  REJECTED
+  RETURNED
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  district  String?
+  createdAt DateTime @default(now())
+
+  batches   Batch[]    @relation("CreatedBatches")
+  approvals Approval[]
+}
+
+model Batch {
+  id             String      @id @default(uuid())
+  batchNumber    String      @unique
+  courseName     String
+  district       String
+  status         BatchStatus @default(DRAFT)
+  reviewCycle    Int         @default(1)
+  centerId       String
+  center         User        @relation("CreatedBatches", fields: [centerId], references: [id])
+  candidates     Candidate[]
+  approvals      Approval[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  submittedAt    DateTime?
+}
+
+model Candidate {
+  id          String   @id @default(uuid())
+  candidateId String
+  fullName    String
+  phone       String
+  email       String?
+  batchId     String
+  batch       Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  certificate Certificate?
+  createdAt   DateTime @default(now())
+
+  @@unique([batchId, candidateId])
+}
+
+model Approval {
+  id         String        @id @default(uuid())
+  batchId    String
+  batch      Batch         @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  reviewerId String
+  reviewer   User          @relation(fields: [reviewerId], references: [id])
+  stage      ApprovalStage
+  decision   Decision
+  comment    String?
+  reviewCycle Int          @default(1)
+  createdAt  DateTime      @default(now())
+
+  @@unique([batchId, reviewerId, stage, reviewCycle])
+}
+
+model Certificate {
+  id                String    @id @default(uuid())
+  certificateNumber  String    @unique
+  verificationToken  String    @unique @default(uuid())
+  candidateId        String    @unique
+  candidate          Candidate @relation(fields: [candidateId], references: [id])
+  issuedAt           DateTime  @default(now())
+  revokedAt          DateTime?
+  revocationReason   String?
+  deliveries        Delivery[]
+}
+
+model Delivery {
+  id           String         @id @default(uuid())
+  certificateId String
+  certificate  Certificate    @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  phone        String
+  status       DeliveryStatus @default(PENDING)
+  attemptCount Int            @default(0)
+  lastAttemptAt DateTime?
+  lastError    String?
+  sentAt       DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@unique([certificateId])
+}

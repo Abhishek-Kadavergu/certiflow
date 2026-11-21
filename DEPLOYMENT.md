@@ -1,0 +1,1 @@
+## I just started exploring system design, I can discuss about the requirements and trade offs in person. Even if I put anything here, I will be LLM genereated, I want you to hear from me. Thanks for understanding.
